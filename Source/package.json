@@ -1,0 +1,14 @@
+{
+  "name": "cometrics-website-test",
+  "license": "LicenseRef-LICENSE",
+  "readme": "..\\Readme.md",
+  "description": "Tests for cometrics-website",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CoopMetrics/CoMetrics.Website/tree/master/CoMetrics.Website.Test"
+  },
+  "devDependencies": {
+    "mocha": "^2.2.5",
+    "mocha-appveyor-reporter": "^0.1.0"
+  }
+}

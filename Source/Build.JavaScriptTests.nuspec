@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package>
+    <metadata>
+        <id>Spritely.Build.JavaScriptTests</id>
+        <version>$version$</version>
+        <title>Spritely.Build.JavaScriptTests</title>
+        <authors>Spritely</authors>
+        <owners>Spritely</owners>
+        <language>en-US</language>
+        <licenseUrl>https://github.com/spritely/Build/blob/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/spritely/Build</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <summary>Extension to Spritely.Build that enables JavaScript unit testing via Mocha.</summary>
+        <description>Extension to Spritely.Build that enables JavaScript unit testing via Mocha.</description>
+        <copyright>Copyright (C) 2015</copyright>
+        <tags>Spritely Build .NET JavaScript test tests</tags>
+    </metadata>
+    <files>
+        <file src="*.json" />
+        <file src="*.targets" />
+        <file src="tools\*.*" target="tools" />
+    </files>
+</package>

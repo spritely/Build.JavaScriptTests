@@ -1,0 +1,31 @@
+# {build} is required by AppVeyor to uniquely identify its builds on the url
+# It is a continuously incrementing number so when used it violates the reset
+# smaller build parts rule of semantic versioning. Therefore we introduce a
+# second environment variable semantic_version.
+version: 0.1.0.{build}
+
+configuration:
+  - Release
+
+install:
+  - set semantic_version=%APPVEYOR_BUILD_VERSION:~0,5%
+  - echo Version - %semantic_version%
+
+nuget:
+  disable_publish_on_pr: true
+
+build: off
+
+after_test:
+  - nuget pack "%APPVEYOR_BUILD_FOLDER%\Source\Build.JavaScriptTests.nuspec" -BasePath "%APPVEYOR_BUILD_FOLDER%\Source" -Properties "Version=%semantic_version%" -OutputDirectory "%TEMP%"
+  - appveyor PushArtifact "%TEMP%\Spritely.Build.JavaScriptTests.%semantic_version%.nupkg"
+
+deploy:
+  - provider: NuGet
+    on:
+      branch: master
+      configuration: Release
+    api_key:
+      secure: dUMLXnYuqF7ORswtDCtj2XgKlpLMKrXZrq9m/FEN2xu0vTClejXqADyxMEawTs2W
+    skip_symbols: true
+    artifact: /.*\.nupkg/

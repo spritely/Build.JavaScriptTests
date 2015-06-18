@@ -1,0 +1,64 @@
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- If this file changes force a rebuild -->
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+
+  <Target Name="SetRunJavaScriptTests">
+    <PropertyGroup>
+      <RunJavaScriptTests>true</RunJavaScriptTests>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="PrepareJavaScriptTests" Inputs="$(MSBuildThisFileDirectory)package.json" Outputs="$(MSBuildThisFileDirectory)node_modules_writes.txt">
+    <Exec
+      Command="npm install"
+      WorkingDirectory="$(MSBuildThisFileDirectory)"
+      Condition="'$(RunJavaScriptTests)'=='true'"
+      LogStandardErrorAsError="true"
+      StdOutEncoding="UTF-8" />
+
+    <ItemGroup>
+      <_InstalledNodeFiles Include="$(MSBuildThisFileDirectory)node_modules\**\*"/>
+    </ItemGroup>
+
+    <WriteLinesToFile
+      File="$(MSBuildThisFileDirectory)node_modules_writes.txt"
+      Lines="@(_InstalledNodeFiles)"
+      Overwrite="true"
+      Encoding="Unicode" />
+  </Target>
+
+  <Target Name="ExecuteJavaScriptTests" DependsOnTargets="PrepareJavaScriptTests" Inputs="$(MSBuildThisFileDirectory)node_modules_writes.txt;@(JavaScriptTests)" Outputs="JavaScriptTestsResults.txt" Condition="'$(RunJavaScriptTests)'=='true' and '@(JavaScriptTests)' != ''">
+    <PropertyGroup>
+      <MochaReporter Condition="'$(MochaReporter)' == ''">spec</MochaReporter>
+    </PropertyGroup>
+
+    <Exec
+      Command="node_modules\.bin\mocha --reporter $(MochaReporter) @(JavaScriptTests->'%(FullPath)', ' ')"
+      WorkingDirectory="$(MSBuildThisFileDirectory)"
+      IgnoreExitCode="true"
+      StdOutEncoding="UTF-8"
+      ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_ConsoleOutput" />
+      <Output TaskParameter="ExitCode" PropertyName="_ExitCode" />
+    </Exec>
+
+    <WriteLinesToFile
+      File="JavaScriptTestsResults.txt"
+      Lines="$(_ConsoleOutput)"
+      Overwrite="true"
+      Encoding="Unicode"
+      Condition="'$(_ExitCode)' == '0'" />
+
+    <Error Condition="'$(_ExitCode)' != '0'" Text="JavaScript test failure." />
+  </Target>
+
+  <!-- User runs build with /t:RunJavaScriptTests - force running by calling Set first -->
+  <Target Name="RunJavaScriptTests" DependsOnTargets="SetRunJavaScriptTests;ExecuteJavaScriptTests">
+  </Target>
+
+  <!-- User runs build with /p:RunJavaScriptTests=true -->
+  <Target Name="JavaScriptTestsBuild" AfterTargets="Build" DependsOnTargets="ExecuteJavaScriptTests">
+  </Target>
+</Project>
