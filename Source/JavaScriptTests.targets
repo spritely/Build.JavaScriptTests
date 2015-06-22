@@ -58,7 +58,14 @@
   <Target Name="RunJavaScriptTests" DependsOnTargets="SetRunJavaScriptTests;ExecuteJavaScriptTests">
   </Target>
 
+  <PropertyGroup>
+    <BuildDependsOn>
+      $(BuildDependsOn);
+      JavaScriptTestsBuild
+    </BuildDependsOn>
+  </PropertyGroup>
+
   <!-- User runs build with /p:RunJavaScriptTests=true -->
-  <Target Name="JavaScriptTestsBuild" AfterTargets="Build" DependsOnTargets="ExecuteJavaScriptTests">
+  <Target Name="JavaScriptTestsBuild" DependsOnTargets="ExecuteJavaScriptTests">
   </Target>
 </Project>
