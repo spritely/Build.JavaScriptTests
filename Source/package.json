@@ -1,14 +1,16 @@
 {
-  "name": "cometrics-website-test",
+  "name": "spritely-build-javascripttest",
   "license": "LicenseRef-LICENSE",
   "readme": "..\\Readme.md",
-  "description": "Tests for cometrics-website",
+  "description": "Test runner for Spritely.Build.JavaScriptTests in AppVeyor",
   "repository": {
     "type": "git",
-    "url": "https://github.com/CoopMetrics/CoMetrics.Website/tree/master/CoMetrics.Website.Test"
+    "url": "https://github.com/spritely/Build.JavaScriptTests"
   },
   "devDependencies": {
     "mocha": "^2.2.5",
-    "mocha-appveyor-reporter": "^0.1.0"
+    "mocha-appveyor-reporter": "^0.1.0",
+    "mocha-phantomjs": "^3.5.3",
+    "phantomjs": "^1.9.7"
   }
 }

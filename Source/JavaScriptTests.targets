@@ -10,7 +10,7 @@
     </PropertyGroup>
   </Target>
 
-  <Target Name="PrepareJavaScriptTests" Inputs="$(MSBuildThisFileDirectory)package.json" Outputs="$(MSBuildThisFileDirectory)node_modules_writes.txt">
+  <Target Name="InstallNodePackages" Inputs="$(MSBuildThisFileDirectory)package.json" Outputs="$(MSBuildThisFileDirectory)node_modules_writes.txt">
     <Exec
       Command="npm install"
       WorkingDirectory="$(MSBuildThisFileDirectory)"
@@ -19,7 +19,7 @@
       StdOutEncoding="UTF-8" />
 
     <ItemGroup>
-      <_InstalledNodeFiles Include="$(MSBuildThisFileDirectory)node_modules\**\*"/>
+      <_InstalledNodeFiles Include="$(MSBuildThisFileDirectory)node_modules\**\*" />
     </ItemGroup>
 
     <WriteLinesToFile
@@ -29,13 +29,21 @@
       Encoding="Unicode" />
   </Target>
 
-  <Target Name="ExecuteJavaScriptTests" DependsOnTargets="PrepareJavaScriptTests" Inputs="$(MSBuildThisFileDirectory)node_modules_writes.txt;@(JavaScriptTests)" Outputs="JavaScriptTestsResults.txt" Condition="'$(RunJavaScriptTests)'=='true' and '@(JavaScriptTests)' != ''">
+  <Target Name="PrepareJavaScriptTests" DependsOnTargets="InstallNodePackages">
+    <ItemGroup>
+      <_AllProjectJavaScriptFiles Include="$(MSBuildProjectDirectory)\**\*.js" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="ExecuteJavaScriptTests" DependsOnTargets="PrepareJavaScriptTests" Inputs="$(MSBuildThisFileDirectory)node_modules_writes.txt;@(JavaScriptTestsHost);@(_AllProjectJavaScriptFiles)" Outputs="JavaScriptTestsResults.txt" Condition="'$(RunJavaScriptTests)'=='true' and '@(JavaScriptTestsHost)' != ''">
     <PropertyGroup>
       <MochaReporter Condition="'$(MochaReporter)' == ''">spec</MochaReporter>
+      <_JavaScriptTestHost>%(JavaScriptTestsHost.FullPath)</_JavaScriptTestHost>
+      <_JavaScriptTestHost>$([MSBuild]::MakeRelative($(MSBuildThisFileDirectory), $(_JavaScriptTestHost)))</_JavaScriptTestHost>
     </PropertyGroup>
 
     <Exec
-      Command="node_modules\.bin\mocha --reporter $(MochaReporter) @(JavaScriptTests->'%(FullPath)', ' ')"
+      Command="node .\node_modules\mocha-phantomjs\bin\mocha-phantomjs -r $(MochaReporter) $(_JavaScriptTestHost)"
       WorkingDirectory="$(MSBuildThisFileDirectory)"
       IgnoreExitCode="true"
       StdOutEncoding="UTF-8"
