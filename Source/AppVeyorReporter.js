@@ -38,9 +38,9 @@ function AppVeyorReporter(runner) {
         }
       }
 
-      xmlhttp.open('POST', process.env.APPVEYOR_API_URL + '/api/tests/batch', false)
+      xmlhttp.open('PUT', process.env.APPVEYOR_API_URL + '/api/tests/batch', false)
       xmlhttp.setRequestHeader('Content-type', 'application/json')
-      xmlhttp.send(tests)
+      xmlhttp.send(JSON.stringify(tests))
     } else {
       require('request-json').newClient(process.env.APPVEYOR_API_URL).post('api/tests/batch', tests, function(err, body, resp) {
         process.exit(tests.filter(function(t) { return t.outcome === 'Failed' }).length || (err ? -1 : 0))
