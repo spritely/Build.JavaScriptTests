@@ -38,7 +38,7 @@ function AppVeyorReporter(runner) {
         }
       }
 
-      xmlhttp.open('GET', process.env.APPVEYOR_API_URL + '/api/tests/batch', true)
+      xmlhttp.open('POST', process.env.APPVEYOR_API_URL + '/api/tests/batch', false)
       xmlhttp.setRequestHeader('Content-type', 'application/json')
       xmlhttp.send(tests)
     } else {
