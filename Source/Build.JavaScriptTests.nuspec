@@ -19,6 +19,7 @@
         </dependencies>
     </metadata>
     <files>
+        <file src="*.js" />
         <file src="*.json" />
         <file src="*.targets" />
         <file src="tools\*.*" target="tools" />
