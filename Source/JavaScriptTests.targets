@@ -43,7 +43,7 @@
     </PropertyGroup>
 
     <Exec
-      Command="node .\node_modules\mocha-phantomjs\bin\mocha-phantomjs -r $(MochaReporter) $(_JavaScriptTestHost)"
+      Command="node .\node_modules\mocha-phantomjs\bin\mocha-phantomjs -R $(MochaReporter) $(_JavaScriptTestHost)"
       WorkingDirectory="$(MSBuildThisFileDirectory)"
       IgnoreExitCode="true"
       StdOutEncoding="UTF-8"
