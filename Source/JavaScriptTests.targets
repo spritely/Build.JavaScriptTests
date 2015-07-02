@@ -14,6 +14,7 @@
           <Reference Include="System.Web.Helpers" />
           <Reference Include="System.Xml" />
           <Reference Include="System.Xml.Linq" />
+          <Using Namespace="System.Collections.Generic" />
           <Using Namespace="System.Linq" />
           <Using Namespace="System.Net" />
           <Using Namespace="System.Xml.Linq" />
@@ -23,6 +24,7 @@
   var root = XElement.Parse("<root>" + this.TestsXml + "</root>");
   var testSuites = root.Elements("testsuite");
 
+  var testResults = new List<object>();
   foreach (var testSuite in testSuites)
   {
     var testCases = testSuite.Elements("testcase");
@@ -67,26 +69,30 @@
         StdErr = ""
       };
 
-      var json = Json.Encode(testResult);
-
-      var httpWebRequest = (HttpWebRequest)WebRequest.Create(this.ToUrl);
-      httpWebRequest.ContentType = "text/json";
-      httpWebRequest.Method = "PUT";
-
-      Log.LogMessage("Sending: " + json);
-      using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-      {
-        streamWriter.Write(json);
-        streamWriter.Flush();
-      }
-      
-      var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-      using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-      {
-        var result = streamReader.ReadToEnd();
-        Log.LogMessage(result.ToString());
-      }
+      testResults.Add(testResult);
     }
+  }
+
+  var json = Json.Encode(testResults);
+
+  Log.LogMessage("Sending: " + json);
+  Log.LogMessage("To: " + this.ToUrl);
+  
+  var httpWebRequest = (HttpWebRequest)WebRequest.Create(this.ToUrl);
+  httpWebRequest.ContentType = "text/json";
+  httpWebRequest.Method = "PUT";
+
+  using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+  {
+    streamWriter.Write(json);
+    streamWriter.Flush();
+  }
+  
+  var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+  using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+  {
+    var result = streamReader.ReadToEnd();
+    Log.LogMessage(result.ToString());
   }
   ]]>
           </Code>
@@ -156,7 +162,7 @@
       Condition="'$(_ExitCode)' == '0'" />
 
     <PutTests
-      ToUrl="$(APPVEYOR_API_URL)api/tests"
+      ToUrl="$(APPVEYOR_API_URL)api/tests/batch"
       TestsXml="$(_ConsoleOutput)"
       Condition="'$(APPVEYOR_API_URL)' != ''" />
 
