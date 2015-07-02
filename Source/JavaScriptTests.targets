@@ -4,7 +4,7 @@
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
   </PropertyGroup>
 
-  <UsingTask TaskName="PutTests" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+  <UsingTask TaskName="PostTests" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
       <ParameterGroup>
           <ToUrl ParameterType="System.String" Required="true" />
           <TestsXml ParameterType="System.String" Required="true" />
@@ -80,7 +80,7 @@
   
   var httpWebRequest = (HttpWebRequest)WebRequest.Create(this.ToUrl);
   httpWebRequest.ContentType = "text/json";
-  httpWebRequest.Method = "PUT";
+  httpWebRequest.Method = "POST";
 
   using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
   {
@@ -161,7 +161,7 @@
       Encoding="UTF-8"
       Condition="'$(_ExitCode)' == '0'" />
 
-    <PutTests
+    <PostTests
       ToUrl="$(APPVEYOR_API_URL)api/tests/batch"
       TestsXml="$(_ConsoleOutput)"
       Condition="'$(APPVEYOR_API_URL)' != ''" />
