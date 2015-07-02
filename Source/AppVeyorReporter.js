@@ -30,18 +30,46 @@ function AppVeyorReporter(runner) {
   })
 
   runner.on('end', function(failures) {
+      console.log('here')
+      console.log(process)
+      console.log(process.env)
+      console.log(process.env.APPVEYOR_API_URL)
+
     if (typeof XMLHttpRequest !== 'undefined') {
       var xmlhttp = new XMLHttpRequest()
-      xmlhttp.onreadystatechange = function() {
+      /*xmlhttp.onreadystatechange = function() {
         if (xmlhttp.readyState == 4 ) {
           // done
         }
-      }
+      }*/
 
       xmlhttp.open('PUT', process.env.APPVEYOR_API_URL + '/api/tests/batch', false)
       xmlhttp.setRequestHeader('Content-type', 'application/json')
+      xmlhttp.send('[' +
+        '{' +
+            '\"testName\": \"Test A\",' +
+            '\"outcome\": \"Passed\",' +
+            '"durationMilliseconds\": \"1200\"' +
+        '},' +
+        '{' +
+            '"testName\": \"Test B\",' +
+            '"outcome\": \"Passed\",' +
+            '"durationMilliseconds\": \"10\"' +
+        '}' +
+      ']')
+
+      console.log(JSON.stringify(tests))
+      xmlhttp.open('PUT', process.env.APPVEYOR_API_URL + '/api/tests/batch', false)
+      xmlhttp.setRequestHeader('Content-type', 'application/json')
       xmlhttp.send(JSON.stringify(tests))
+
+      console.log('nearly done')
+      xmlhttp.open('PUT', process.env.APPVEYOR_API_URL + '/api/tests/batch', false)
+      xmlhttp.setRequestHeader('Content-type', 'application/json')
+      xmlhttp.send(tests)
+      console.log('did I get here')
     } else {
+      console.log('else')
       require('request-json').newClient(process.env.APPVEYOR_API_URL).post('api/tests/batch', tests, function(err, body, resp) {
         process.exit(tests.filter(function(t) { return t.outcome === 'Failed' }).length || (err ? -1 : 0))
       })
