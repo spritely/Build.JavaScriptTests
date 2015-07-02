@@ -4,17 +4,90 @@
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
   </PropertyGroup>
 
-  <UsingTask TaskName="UploadFile" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+  <UsingTask TaskName="PutTests" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
       <ParameterGroup>
           <ToUrl ParameterType="System.String" Required="true" />
-          <File ParameterType="System.String" Required="true" />
+          <TestsXml ParameterType="System.String" Required="true" />
       </ParameterGroup>
       <Task>
-
+          <Reference Include="System.Net" />
+          <Reference Include="System.Web.Helpers" />
+          <Reference Include="System.Xml" />
+          <Reference Include="System.Xml.Linq" />
+          <Using Namespace="System.Linq" />
+          <Using Namespace="System.Net" />
+          <Using Namespace="System.Xml.Linq" />
+          <Using Namespace="System.Web.Helpers" />
           <Code Type="Fragment" Language="cs">
               <![CDATA[
-  var webClient = new System.Net.WebClient();
-  webClient.UploadFile(this.ToUrl, this.File);
+  var root = XElement.Parse("<root>" + this.TestsXml + "</root>");
+  var testSuites = root.Elements("testsuite");
+
+  foreach (var testSuite in testSuites)
+  {
+    var testCases = testSuite.Elements("testcase");
+
+    foreach (var testCase in testCases)
+    {
+      var testName = testCase.Attribute("name").Value;
+      var fileName = testCase.Attribute("classname").Value;
+      var outcome = "Passed";
+      var durationMilliseconds = Convert.ToInt32(Decimal.Parse(testCase.Attribute("time").Value) * 1000).ToString();
+      var ErrorMessage = "";
+      var ErrorStackTrace = "";
+
+      var skipped = testCase.Descendants("skipped");
+      if (skipped.Any())
+      {
+        outcome = "Ignored";
+      }
+
+      var failure = testCase.Descendants("failure").SingleOrDefault();
+      if (failure != null)
+      {
+        outcome = "Failed";
+        var failureValue = failure.Value.Replace("\\r", "\r").Replace("\\n", "\n");
+        var stackTraceIndex = failureValue.IndexOf("\r\n");
+        if (stackTraceIndex > 0)
+        {
+          ErrorMessage = failureValue.Substring(0, stackTraceIndex);
+          ErrorStackTrace = failureValue.Substring(stackTraceIndex + 2, failureValue.Length - stackTraceIndex - 2);
+        }
+      }
+
+      var testResult = new {
+        testName = testName,
+        testFramework = "Mocha",
+        fileName = fileName,
+        outcome = outcome,
+        durationMilliseconds = durationMilliseconds,
+        ErrorMessage = ErrorMessage,
+        ErrorStackTrace = ErrorStackTrace,
+        StdOut = "",
+        StdErr = ""
+      };
+
+      var json = Json.Encode(testResult);
+
+      var httpWebRequest = (HttpWebRequest)WebRequest.Create("https://ci.appveyor.com/api/tests");
+      httpWebRequest.ContentType = "text/json";
+      httpWebRequest.Method = "PUT";
+
+      Log.LogMessage("Sending: " + json);
+      using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+      {
+        streamWriter.Write(json);
+        streamWriter.Flush();
+      }
+      
+      var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+      using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+      {
+        var result = streamReader.ReadToEnd();
+        Log.LogMessage(result.ToString());
+      }
+    }
+  }
   ]]>
           </Code>
       </Task>
@@ -67,9 +140,13 @@
       IgnoreExitCode="true"
       StdOutEncoding="UTF-8"
       ConsoleToMSBuild="true">
-      <Output TaskParameter="ConsoleOutput" PropertyName="_ConsoleOutput" />
+      <Output TaskParameter="ConsoleOutput" ItemName="_ConsoleOutput" />
       <Output TaskParameter="ExitCode" PropertyName="_ExitCode" />
     </Exec>
+
+    <PropertyGroup>
+      <_ConsoleOutput>@(_ConsoleOutput->'%(Identity)', '\r\n')</_ConsoleOutput>
+    </PropertyGroup>
 
     <WriteLinesToFile
       File="$(MochaResultsFilePath)"
@@ -78,10 +155,10 @@
       Encoding="UTF-8"
       Condition="'$(_ExitCode)' == '0'" />
 
-    <UploadFile
-      ToUrl="https://ci.appveyor.com/api/testresults/xunit/$(APPVEYOR_JOB_ID)"
-      File="$(MochaResultsFilePath)"
-      Condition="'$(APPVEYOR_JOB_ID)' != ''" />
+    <PutTests
+      ToUrl="$(APPVEYOR_API_URL)/api/tests"
+      TestsXml="$(_ConsoleOutput)"
+      Condition="'$(APPVEYOR_API_URL)' != ''" />
 
     <Error Condition="'$(_ExitCode)' != '0'" Text="JavaScript test failure." />
   </Target>
