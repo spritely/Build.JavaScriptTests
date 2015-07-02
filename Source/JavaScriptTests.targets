@@ -4,6 +4,22 @@
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
   </PropertyGroup>
 
+  <UsingTask TaskName="UploadFile" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+      <ParameterGroup>
+          <ToUrl ParameterType="System.String" Required="true" />
+          <File ParameterType="System.String" Required="true" />
+      </ParameterGroup>
+      <Task>
+
+          <Code Type="Fragment" Language="cs">
+              <![CDATA[
+  var webClient = new System.Net.WebClient();
+  webClient.UploadFile(this.ToUrl, this.File);
+  ]]>
+          </Code>
+      </Task>
+  </UsingTask>
+
   <Target Name="SetRunJavaScriptTests">
     <PropertyGroup>
       <RunJavaScriptTests>true</RunJavaScriptTests>
@@ -33,17 +49,20 @@
     <ItemGroup>
       <_AllProjectJavaScriptFiles Include="$(MSBuildProjectDirectory)\**\*.js" />
     </ItemGroup>
+
+    <PropertyGroup>
+      <MochaResultsFilePath Condition="'$(MochaResultsFilePath)' == ''">$(MSBuildProjectDirectory)\JavaScriptTests.xunit</MochaResultsFilePath>
+    </PropertyGroup>
   </Target>
 
-  <Target Name="ExecuteJavaScriptTests" DependsOnTargets="PrepareJavaScriptTests" Inputs="$(MSBuildThisFileDirectory)node_modules_writes.txt;@(JavaScriptTestsHost);@(_AllProjectJavaScriptFiles)" Outputs="JavaScriptTestsResults.txt" Condition="'$(RunJavaScriptTests)'=='true' and '@(JavaScriptTestsHost)' != ''">
+  <Target Name="ExecuteJavaScriptTests" DependsOnTargets="PrepareJavaScriptTests" Inputs="$(MSBuildThisFileDirectory)node_modules_writes.txt;@(JavaScriptTestsHost);@(_AllProjectJavaScriptFiles)" Outputs="$(MochaResultsFilePath)" Condition="'$(RunJavaScriptTests)'=='true' and '@(JavaScriptTestsHost)' != ''">
     <PropertyGroup>
-      <MochaReporter Condition="'$(MochaReporter)' == ''">spec</MochaReporter>
       <_JavaScriptTestHost>%(JavaScriptTestsHost.FullPath)</_JavaScriptTestHost>
       <_JavaScriptTestHost>$([MSBuild]::MakeRelative($(MSBuildThisFileDirectory), $(_JavaScriptTestHost)))</_JavaScriptTestHost>
     </PropertyGroup>
 
     <Exec
-      Command="node .\node_modules\mocha-phantomjs\bin\mocha-phantomjs -R $(MochaReporter) $(_JavaScriptTestHost)"
+      Command="node .\node_modules\mocha-phantomjs\bin\mocha-phantomjs -R xunit $(_JavaScriptTestHost)"
       WorkingDirectory="$(MSBuildThisFileDirectory)"
       IgnoreExitCode="true"
       StdOutEncoding="UTF-8"
@@ -53,11 +72,16 @@
     </Exec>
 
     <WriteLinesToFile
-      File="JavaScriptTestsResults.txt"
+      File="$(MochaResultsFilePath)"
       Lines="$(_ConsoleOutput)"
       Overwrite="true"
       Encoding="Unicode"
       Condition="'$(_ExitCode)' == '0'" />
+
+    <UploadFile
+      ToUrl="https://ci.appveyor.com/api/testresults/xunit/$(APPVEYOR_JOB_ID)"
+      File="$(MochaResultsFilePath)"
+      Condition="'$(APPVEYOR)' == 'true'" />
 
     <Error Condition="'$(_ExitCode)' != '0'" Text="JavaScript test failure." />
   </Target>
