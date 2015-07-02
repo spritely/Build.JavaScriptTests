@@ -75,13 +75,13 @@
       File="$(MochaResultsFilePath)"
       Lines="$(_ConsoleOutput)"
       Overwrite="true"
-      Encoding="Unicode"
+      Encoding="UTF-8"
       Condition="'$(_ExitCode)' == '0'" />
 
     <UploadFile
       ToUrl="https://ci.appveyor.com/api/testresults/xunit/$(APPVEYOR_JOB_ID)"
       File="$(MochaResultsFilePath)"
-      Condition="'$(APPVEYOR)' == 'true'" />
+      Condition="'$(APPVEYOR_JOB_ID)' != ''" />
 
     <Error Condition="'$(_ExitCode)' != '0'" Text="JavaScript test failure." />
   </Target>
