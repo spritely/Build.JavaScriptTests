@@ -30,10 +30,7 @@ function AppVeyorReporter(runner) {
   })
 
   runner.on('end', function(failures) {
-      console.log('here')
-      console.log(process)
-      console.log(process.env)
-      console.log(process.env.APPVEYOR_API_URL)
+    console.log('here')
 
     if (typeof XMLHttpRequest !== 'undefined') {
       var xmlhttp = new XMLHttpRequest()
@@ -42,6 +39,14 @@ function AppVeyorReporter(runner) {
           // done
         }
       }*/
+
+      console.log('got xmlhttp')
+      console.log(process)
+      console.log('process did not barf')
+      console.log(process.env)
+      console.log('process.env did not barf')
+      console.log(process.env.APPVEYOR_API_URL)
+      console.log('appveyor_api_url did not barf')
 
       xmlhttp.open('PUT', process.env.APPVEYOR_API_URL + '/api/tests/batch', false)
       xmlhttp.setRequestHeader('Content-type', 'application/json')
