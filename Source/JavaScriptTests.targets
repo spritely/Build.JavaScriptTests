@@ -110,7 +110,7 @@
       Command="npm install"
       WorkingDirectory="$(MSBuildThisFileDirectory)"
       Condition="'$(RunJavaScriptTests)'=='true'"
-      LogStandardErrorAsError="true"
+      LogStandardErrorAsError="false"
       StdOutEncoding="UTF-8" />
 
     <ItemGroup>

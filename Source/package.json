@@ -10,7 +10,6 @@
   "devDependencies": {
     "mocha": "^2.2.5",
     "request-json": "^0.5.0",
-    "mocha-phantomjs": "^3.5.3",
-    "phantomjs": "^1.9.7"
+    "mocha-phantomjs": "3.6.0"
   }
 }
